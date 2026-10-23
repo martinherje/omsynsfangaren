@@ -1,28 +1,34 @@
-<!doctype html><html lang="nn"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Omsynsfangaren</title>
-<style>html,body{margin:0;height:100%;background:#0f172a;color:#e2e8f0;font-family:-apple-system,Helvetica,Arial,sans-serif;overflow:hidden;touch-action:none}
-#c{display:block;width:100vw;height:100vh}#hud{position:fixed;top:10px;left:0;right:0;text-align:center;font-size:18px;pointer-events:none;text-shadow:0 1px 3px #000}
-#msg{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(15,23,42,.88);text-align:center;padding:24px}
-#msg h1{font-size:28px;margin:0 0 8px}#msg p{max-width:34ch;line-height:1.45;margin:6px 0}#msg button{margin-top:16px;font-size:20px;padding:12px 28px;border:0;border-radius:12px;background:#22c55e;color:#052e16;font-weight:700}</style></head><body>
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Breakout</title>
+<style>html,body{margin:0;height:100%;background:#111;color:#eee;font-family:-apple-system,Helvetica,Arial,sans-serif;overflow:hidden;touch-action:none}
+#c{display:block;width:100vw;height:100vh}#hud{position:fixed;top:8px;left:0;right:0;text-align:center;font-size:17px;pointer-events:none;text-shadow:0 1px 3px #000;letter-spacing:.5px}
+#msg{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,.78);text-align:center;padding:24px}
+#msg h1{font-size:40px;margin:0 0 6px;letter-spacing:2px}#msg p{margin:6px 0;opacity:.9}#msg button{margin-top:18px;font-size:20px;padding:12px 30px;border:0;border-radius:12px;background:#ffd166;color:#222;font-weight:700}</style></head><body>
 <canvas id="c"></canvas><div id="hud"></div>
-<div id="msg"><h1>Omsynsfangaren</h1><p>Du er saksbehandlar. Fang dei <b style="color:#4ade80">relevante omsyna</b> og unngå dei <b style="color:#f87171">utanforliggjande</b>.</p><p>Dra fingeren sidelengs for å styre. Tre utanforliggjande omsyn = vedtaket er ugyldig (fvl. § 40).</p><button id="go">Start</button><p id="best" style="opacity:.7;font-size:14px"></p></div>
+<div id="msg"><h1>BREAKOUT</h1><p>Drag to move the paddle. Tap to launch.</p><p id="best" style="font-size:14px;opacity:.7"></p><button id="go">Play</button></div>
 <script>
 const cv=document.getElementById('c'),ctx=cv.getContext('2d'),hud=document.getElementById('hud'),msg=document.getElementById('msg'),go=document.getElementById('go'),bestEl=document.getElementById('best');
-let W,H,dpr;function resize(){dpr=Math.min(2,devicePixelRatio||1);W=innerWidth;H=innerHeight;cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)}addEventListener('resize',resize);resize();
-const GOOD=['sakleg samanheng','likebehandling','partens argument','lova sitt føremål','forholdsmessigheit','presedens','barnets beste','rettstryggleik','dokumentasjon','§ 57 (1) c'];
-const BAD=['partens utsjånad','personleg uvilje','valkamp','tidspress','kven som spurde','magekjensle','sladder','avisoppslag','vennskap','trøyttleik'];
-let items=[],px,score,bad,speed,t0,alive,best=+(localStorage.getItem('omsyn-best')||0);bestEl.textContent=best?('Beste: '+best):'';
-function reset(){items=[];px=W/2;score=0;bad=0;speed=1;alive=true;t0=performance.now();spawnTimer=0}
-let spawnTimer=0,last=0;
-function spawn(){const good=Math.random()<0.62;items.push({x:40+Math.random()*(W-80),y:-30,good,txt:(good?GOOD:BAD)[Math.floor(Math.random()*10)],vy:(1.6+Math.random()*1.2)*speed})}
-function step(ts){const dt=Math.min(40,ts-last||16);last=ts;if(alive){spawnTimer+=dt;speed=1+(ts-t0)/45000;if(spawnTimer>Math.max(380,900/speed)){spawn();spawnTimer=0}
-const by=H-70;for(const it of items){it.y+=it.vy*dt/16;if(it.y>by-18&&it.y<by+30&&Math.abs(it.x-px)<70){it.hit=true;if(it.good)score++;else{bad++;navigator.vibrate&&navigator.vibrate(80)}}}
-items=items.filter(it=>!it.hit&&it.y<H+40);if(bad>=3){alive=false;best=Math.max(best,score);localStorage.setItem('omsyn-best',best);msg.querySelector('h1').textContent='Vedtaket er ugyldig';msg.querySelector('p').innerHTML='Du vekta tre utanforliggjande omsyn. Poeng: <b>'+score+'</b>. Beste: '+best+'.';go.textContent='Nytt vedtak';msg.style.display='flex'}}
-ctx.fillStyle='#0f172a';ctx.fillRect(0,0,W,H);ctx.font='15px -apple-system,Helvetica,Arial';ctx.textAlign='center';ctx.textBaseline='middle';
-for(const it of items){ctx.fillStyle=it.good?'#4ade80':'#f87171';ctx.beginPath();ctx.roundRect(it.x-66,it.y-16,132,32,10);ctx.fill();ctx.fillStyle='#052e16';if(!it.good)ctx.fillStyle='#450a0a';ctx.fillText(it.txt,it.x,it.y)}
-ctx.fillStyle='#38bdf8';ctx.beginPath();ctx.roundRect(px-70,H-70,140,22,8);ctx.fill();ctx.fillStyle='#0c4a6e';ctx.fillText('vedtak',px,H-59);
-hud.textContent='Poeng '+score+'   ·   Utanforliggjande '+bad+'/3';requestAnimationFrame(step)}
-function move(e){const x=(e.touches?e.touches[0].clientX:e.clientX);px=Math.max(70,Math.min(W-70,x))}
-addEventListener('touchstart',move,{passive:true});addEventListener('touchmove',move,{passive:true});addEventListener('mousemove',move);
-go.onclick=()=>{msg.style.display='none';reset()};requestAnimationFrame(step);
+let W,H;function resize(){const d=Math.min(2,devicePixelRatio||1);W=innerWidth;H=innerHeight;cv.width=W*d;cv.height=H*d;ctx.setTransform(d,0,0,d,0,0)}addEventListener('resize',resize);resize();
+const COLORS=['#ef476f','#f78c6b','#ffd166','#06d6a0','#118ab2','#8338ec'];
+let best=+(localStorage.getItem('breakout-best')||0);bestEl.textContent=best?'Best: '+best:'';
+let paddle,ball,bricks,score,lives,level,playing=false,launched=false,last=0;
+function layout(){const cols=Math.max(5,Math.min(9,Math.floor(W/46))),rows=4+Math.min(4,level),gap=5,bw=(W-gap*(cols+1))/cols,bh=Math.max(14,Math.min(22,H*0.028));bricks=[];for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)bricks.push({x:gap+c*(bw+gap),y:70+r*(bh+gap),w:bw,h:bh,col:COLORS[r%COLORS.length],hp:r<2&&level>1?2:1})}
+function resetBall(){ball={x:paddle.x,y:paddle.y-12,r:7,vx:0,vy:0,speed:Math.min(11,5.5+level*0.6)};launched=false}
+function start(){score=0;lives=3;level=1;paddle={x:W/2,y:H-52,w:Math.max(70,W*0.24),h:14};layout();resetBall();playing=true;msg.style.display='none'}
+function launch(){if(!launched&&playing){const a=(-Math.PI/2)+(Math.random()-0.5)*0.8;ball.vx=Math.cos(a)*ball.speed;ball.vy=Math.sin(a)*ball.speed;launched=true}}
+function over(title,sub){playing=false;best=Math.max(best,score);localStorage.setItem('breakout-best',best);msg.querySelector('h1').textContent=title;msg.querySelectorAll('p')[0].innerHTML=sub+' Score <b>'+score+'</b> · Best '+best;go.textContent='Play again';msg.style.display='flex'}
+function step(ts){const dt=Math.min(32,ts-last||16)/16;last=ts;
+if(playing){if(!launched){ball.x=paddle.x;ball.y=paddle.y-12}else{ball.x+=ball.vx*dt;ball.y+=ball.vy*dt;
+if(ball.x<ball.r){ball.x=ball.r;ball.vx=Math.abs(ball.vx)}if(ball.x>W-ball.r){ball.x=W-ball.r;ball.vx=-Math.abs(ball.vx)}if(ball.y<ball.r+36){ball.y=ball.r+36;ball.vy=Math.abs(ball.vy)}
+if(ball.vy>0&&ball.y+ball.r>=paddle.y&&ball.y-ball.r<=paddle.y+paddle.h&&Math.abs(ball.x-paddle.x)<=paddle.w/2+ball.r){const rel=(ball.x-paddle.x)/(paddle.w/2);const a=rel*1.1-Math.PI/2;const sp=Math.min(13,ball.speed+0.15);ball.vx=Math.cos(a)*sp;ball.vy=Math.sin(a)*sp;ball.y=paddle.y-ball.r-1;ball.speed=sp}
+for(const b of bricks){if(b.hp>0&&ball.x+ball.r>b.x&&ball.x-ball.r<b.x+b.w&&ball.y+ball.r>b.y&&ball.y-ball.r<b.y+b.h){const ox=Math.min(ball.x+ball.r-b.x,b.x+b.w-(ball.x-ball.r)),oy=Math.min(ball.y+ball.r-b.y,b.y+b.h-(ball.y-ball.r));if(ox<oy)ball.vx=-ball.vx;else ball.vy=-ball.vy;b.hp--;score+=10;navigator.vibrate&&navigator.vibrate(10);break}}
+if(ball.y>H+20){lives--;navigator.vibrate&&navigator.vibrate([60,40,60]);if(lives<=0){over('GAME OVER','');}else resetBall()}
+if(bricks.every(b=>b.hp<=0)){level++;score+=100;layout();resetBall()}}}
+ctx.fillStyle='#111';ctx.fillRect(0,0,W,H);
+for(const b of bricks)if(b.hp>0){ctx.fillStyle=b.col;ctx.globalAlpha=b.hp>1?1:0.9;ctx.fillRect(b.x,b.y,b.w,b.h);if(b.hp>1){ctx.fillStyle='rgba(255,255,255,.35)';ctx.fillRect(b.x+3,b.y+3,b.w-6,b.h-6)}ctx.globalAlpha=1}
+if(paddle){ctx.fillStyle='#eee';ctx.beginPath();ctx.roundRect(paddle.x-paddle.w/2,paddle.y,paddle.w,paddle.h,7);ctx.fill();ctx.fillStyle='#ffd166';ctx.beginPath();ctx.arc(ball.x,ball.y,ball.r,0,7);ctx.fill()}
+hud.textContent=playing?('Score '+score+'   Lives '+'●'.repeat(lives)+'   Level '+level):'';requestAnimationFrame(step)}
+function move(e){if(!paddle)return;const x=e.touches?e.touches[0].clientX:e.clientX;paddle.x=Math.max(paddle.w/2,Math.min(W-paddle.w/2,x))}
+addEventListener('touchstart',e=>{move(e);launch()},{passive:true});addEventListener('touchmove',move,{passive:true});addEventListener('mousemove',move);addEventListener('mousedown',launch);addEventListener('keydown',e=>{if(e.code==='Space')launch()});
+go.onclick=start;requestAnimationFrame(step);
 </script></body></html>
